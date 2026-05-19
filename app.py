@@ -9,7 +9,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'covid_prediction_dashboard_secure_key_2026')
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'predictions.db')
+# On Vercel, the file system is read-only. Store SQLite database in /tmp.
+if os.environ.get('VERCEL') or os.environ.get('NOW_REGION'):
+    DB_PATH = '/tmp/predictions.db'
+else:
+    DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'predictions.db')
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
