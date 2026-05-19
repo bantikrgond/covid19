@@ -10,3 +10,5 @@ env/
 predictions.db
 .vscode/
 .idea/
+*.csv
+*.pkl

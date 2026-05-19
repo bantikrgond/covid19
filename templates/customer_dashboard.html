@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Health Dashboard | COVID AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #070a13;
+            --bg-card: rgba(13, 17, 30, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --accent: #10b981;
+            --accent-glow: rgba(16, 185, 129, 0.3);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --risk-low: #10b981;
+            --risk-high: #ef4444;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Blobs */
+        .blob {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--accent-glow) 0%, rgba(16, 185, 129, 0) 70%);
+            filter: blur(80px);
+            z-index: 1;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .blob-1 { top: -200px; right: -100px; }
+        .blob-2 { bottom: -200px; left: -100px; }
+
+        /* Dashboard Wrapper */
+        .dashboard-container {
+            position: relative;
+            z-index: 10;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 20px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+
+        .brand i {
+            font-size: 28px;
+            color: var(--accent);
+            text-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .brand h1 {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Welcome Card */
+        .welcome-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+        }
+
+        .welcome-card h2 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .welcome-card p {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Metrics Table Card */
+        .metrics-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+        }
+
+        .metrics-card h3 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            padding: 16px;
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 15px;
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .status-badge.recovered {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--risk-low);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-badge.monitored {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--risk-high);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Matplotlib Chart Container */
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 30px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            text-align: center;
+        }
+
+        .chart-card h3 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 12px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-wrapper {
+            background: #fff;
+            padding: 15px;
+            border-radius: 16px;
+            display: inline-block;
+            max-width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .chart-wrapper img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header>
+            <a href="/" class="brand">
+                <i class="fa-solid fa-virus-covid"></i>
+                <h1>COVID AI <span style="font-weight: 300; font-size: 20px; color: var(--text-muted);">Customer Area</span></h1>
+            </a>
+            <div class="user-info">
+                <span style="font-weight: 600; color: #fff;"><i class="fa-solid fa-user-circle"></i> {{ session['customer_name'] }}</span>
+                <a href="/customer/logout" class="btn btn-danger"><i class="fa-solid fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </header>
+
+        <!-- Welcome Banner -->
+        <section class="welcome-card">
+            <h2>Hello, {{ session['customer_name'] }}!</h2>
+            <p>Welcome to your personal health portal. Below you can find a comprehensive comparison of your clinical markers showing progress before and after receiving clinical recommendations.</p>
+        </section>
+
+        <!-- Structured Metrics Comparison -->
+        <section class="metrics-card">
+            <h3><i class="fa-solid fa-square-poll-vertical" style="color: var(--accent);"></i> Historical Health Data Summary</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Health Metric</th>
+                            <th>Previous (Before)</th>
+                            <th>Current (After)</th>
+                            <th>Status / Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for metric in metrics %}
+                        <tr>
+                            <td style="font-weight: 700; color: #fff;">{{ metric['metric_name'] }}</td>
+                            <td style="font-weight: 600; color: #f87171;">{{ metric['previous_value'] }} {{ metric['unit'] }}</td>
+                            <td style="font-weight: 600; color: #34d399;">{{ metric['current_value'] }} {{ metric['unit'] }}</td>
+                            <td>
+                                {% if metric['metric_name'] == 'Oxygen Saturation' %}
+                                    {% if metric['current_value'] > metric['previous_value'] %}
+                                        <span class="status-badge recovered"><i class="fa-solid fa-circle-arrow-up"></i> Improved</span>
+                                    {% else %}
+                                        <span class="status-badge monitored"><i class="fa-solid fa-circle-arrow-down"></i> Monitor</span>
+                                    {% endif %}
+                                {% else %}
+                                    {% if metric['current_value'] < metric['previous_value'] %}
+                                        <span class="status-badge recovered"><i class="fa-solid fa-circle-arrow-down"></i> Improved</span>
+                                    {% else %}
+                                        <span class="status-badge monitored"><i class="fa-solid fa-circle-arrow-up"></i> Monitor</span>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Matplotlib Progress Visualization -->
+        <section class="chart-card">
+            <h3><i class="fa-solid fa-chart-line" style="color: var(--accent);"></i> Recovery Visualization</h3>
+            <div class="chart-wrapper">
+                <!-- Renders matplotlib output exactly as-is without custom canvas wrappers -->
+                <img src="/customer/chart.png" alt="Matplotlib Comparison Chart">
+            </div>
+        </section>
+    </div>
+
+</body>
+</html>

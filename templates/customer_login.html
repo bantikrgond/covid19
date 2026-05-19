@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login | COVID AI</title>
+    <title>Customer Login | COVID AI</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -11,7 +11,7 @@
             --bg-dark: #070a13;
             --card-bg: rgba(13, 17, 30, 0.7);
             --glass-border: rgba(255, 255, 255, 0.06);
-            --accent: #10b981; /* Emerald green accent matching main site */
+            --accent: #10b981;
             --accent-glow: rgba(16, 185, 129, 0.3);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
@@ -250,8 +250,8 @@
             <a href="/" class="logo">
                 <i class="fa-solid fa-virus-covid"></i> COVID AI
             </a>
-            <h2 class="title">Welcome Back</h2>
-            <p class="subtitle">Enter credentials to access the admin panel</p>
+            <h2 class="title">Customer Portal</h2>
+            <p class="subtitle">Access your health statistics and analytics</p>
         </div>
 
         {% if error %}
@@ -261,19 +261,19 @@
         </div>
         {% endif %}
 
-        <form action="/admin/login" method="POST">
+        <form action="/customer/login" method="POST">
             <div class="form-group">
-                <label for="username">Username</label>
+                <label for="email">Email Address</label>
                 <div class="input-wrapper">
-                    <input type="text" id="username" name="username" class="form-control" placeholder="Enter admin username" required autocomplete="username">
-                    <i class="fa-solid fa-user"></i>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="customer@covidai.com" required autocomplete="email">
+                    <i class="fa-solid fa-envelope"></i>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="password">Password</label>
                 <div class="input-wrapper">
-                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter admin password" required autocomplete="current-password">
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required autocomplete="current-password">
                     <i class="fa-solid fa-lock"></i>
                 </div>
             </div>

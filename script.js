@@ -86,7 +86,8 @@ function saveHistory(name, risk, riskClass, confidence) {
 
     // Silently send prediction data to the backend API for admin collection
     try {
-        const age = parseInt(document.getElementById("age").value) || 25;
+        let ageVal = parseInt(document.getElementById("age").value);
+        const age = isNaN(ageVal) ? 25 : ageVal;
         const gender = document.getElementById("gender").value || "Male";
         const fever = document.getElementById("fever").value || "No";
         const cough = document.getElementById("cough").value || "No";
@@ -95,9 +96,12 @@ function saveHistory(name, risk, riskClass, confidence) {
         const breathing = document.getElementById("breathing").value || "No";
         const diabetes = document.getElementById("diabetes").value || "No";
 
-        const isLocalFile = window.location.protocol === 'file:';
-        const isOtherPort = window.location.port !== '5000';
-        const baseUrl = (isLocalFile || isOtherPort) ? 'http://127.0.0.1:5000' : '';
+        let baseUrl = '';
+        if (window.location.protocol === 'file:') {
+            baseUrl = 'http://127.0.0.1:5000';
+        } else if ((window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port !== '5000') {
+            baseUrl = 'http://127.0.0.1:5000';
+        }
 
         fetch(baseUrl + '/api/save_prediction', {
             method: 'POST',
@@ -217,9 +221,12 @@ async function animateStats() {
 
     let activeUsers = 25; // fallback value
     try {
-        const isLocalFile = window.location.protocol === 'file:';
-        const isOtherPort = window.location.port !== '5000';
-        const baseUrl = (isLocalFile || isOtherPort) ? 'http://127.0.0.1:5000' : '';
+        let baseUrl = '';
+        if (window.location.protocol === 'file:') {
+            baseUrl = 'http://127.0.0.1:5000';
+        } else if ((window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port !== '5000') {
+            baseUrl = 'http://127.0.0.1:5000';
+        }
         const res = await fetch(baseUrl + '/api/stats');
         if (res.ok) {
             const data = await res.json();
@@ -327,6 +334,15 @@ document.addEventListener('DOMContentLoaded', () => {
     renderHistory();
     initCustomSelects();
     initMobileMenu();
+
+    // Protocol fallback for double-clicked local files
+    if (window.location.protocol === 'file:') {
+        console.log("Local file protocol detected. Prepending localhost:5000 to absolute links.");
+        document.querySelectorAll('a[href^="/"]').forEach(link => {
+            const path = link.getAttribute('href');
+            link.setAttribute('href', 'http://127.0.0.1:5000' + path);
+        });
+    }
 });
 
 function initMobileMenu() {

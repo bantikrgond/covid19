@@ -72,6 +72,57 @@ def init_db():
         print("WARNING: Please change this password in a production environment.")
         print("=" * 60)
         
+    # 4. Create Customers Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS customers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            name TEXT NOT NULL
+        )
+    ''')
+
+    # 5. Create Customer Health Data Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS customer_health_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id INTEGER NOT NULL,
+            metric_name TEXT NOT NULL,
+            previous_value REAL NOT NULL,
+            current_value REAL NOT NULL,
+            unit TEXT NOT NULL,
+            FOREIGN KEY(customer_id) REFERENCES customers(id)
+        )
+    ''')
+
+    # Insert default customer if table is empty
+    cursor.execute('SELECT COUNT(*) FROM customers WHERE email = ?', ('customer@covidai.com',))
+    if cursor.fetchone()[0] == 0:
+        hashed_password = generate_password_hash('Customer123')
+        cursor.execute(
+            'INSERT INTO customers (email, password_hash, name) VALUES (?, ?, ?)',
+            ('customer@covidai.com', hashed_password, 'Alice Smith')
+        )
+        customer_id = cursor.lastrowid
+        
+        # Insert health data
+        health_metrics = [
+            ('Body Temperature', 101.5, 98.6, 'F'),
+            ('Symptom Severity', 8.0, 2.0, 'score'),
+            ('Oxygen Saturation', 91.0, 98.0, 'percent'),
+            ('Heart Rate', 95.0, 72.0, 'bpm')
+        ]
+        for metric, prev_val, curr_val, unit in health_metrics:
+            cursor.execute(
+                'INSERT INTO customer_health_data (customer_id, metric_name, previous_value, current_value, unit) VALUES (?, ?, ?, ?, ?)',
+                (customer_id, metric, prev_val, curr_val, unit)
+            )
+        print("=" * 60)
+        print("DATABASE INITIALIZED: Default Customer Created!")
+        print("Email: customer@covidai.com")
+        print("Password: Customer123")
+        print("=" * 60)
+
     conn.commit()
     conn.close()
 
@@ -205,8 +256,131 @@ def admin_login():
 @app.route('/admin/logout')
 def admin_logout():
     """Logs the admin user out and destroys session context."""
-    session.clear()
+    session.pop('admin_logged_in', None)
+    session.pop('admin_user', None)
     return redirect('/admin/login')
+
+# ==========================================
+# CUSTOMER AUTH DECORATOR & ROUTES
+# ==========================================
+def customer_login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'customer_logged_in' not in session:
+            return redirect('/customer/login')
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/customer/login', methods=['GET', 'POST'])
+def customer_login():
+    """Handles customer authentication login screen and logic."""
+    if 'customer_logged_in' in session:
+        return redirect('/customer/dashboard')
+        
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '').strip()
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM customers WHERE email = ?', (email,))
+        customer = cursor.fetchone()
+        conn.close()
+        
+        if customer and check_password_hash(customer['password_hash'], password):
+            session['customer_logged_in'] = True
+            session['customer_id'] = customer['id']
+            session['customer_email'] = customer['email']
+            session['customer_name'] = customer['name']
+            return redirect('/customer/dashboard')
+        else:
+            return render_template('customer_login.html', error="Invalid email or password.")
+            
+    return render_template('customer_login.html', error=None)
+
+@app.route('/customer/logout')
+def customer_logout():
+    """Logs the customer out and destroys session context."""
+    session.pop('customer_logged_in', None)
+    session.pop('customer_id', None)
+    session.pop('customer_email', None)
+    session.pop('customer_name', None)
+    return redirect('/customer/login')
+
+@app.route('/customer/dashboard')
+@customer_login_required
+def customer_dashboard():
+    """Renders the customer health dashboard."""
+    customer_id = session['customer_id']
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM customer_health_data WHERE customer_id = ?', (customer_id,))
+    metrics = cursor.fetchall()
+    conn.close()
+    
+    return render_template('customer_dashboard.html', metrics=metrics)
+
+@app.route('/customer/chart.png')
+@customer_login_required
+def customer_chart_png():
+    """Generates the comparison chart dynamically using matplotlib."""
+    customer_id = session['customer_id']
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT metric_name, previous_value, current_value, unit FROM customer_health_data WHERE customer_id = ?', (customer_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    
+    # Use standard labels for before/after comparison
+    metric_names = [f"{row['metric_name']} ({row['unit']})" for row in rows]
+    previous = [row['previous_value'] for row in rows]
+    current = [row['current_value'] for row in rows]
+        
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    import numpy as np
+    
+    x = np.arange(len(metric_names))
+    width = 0.35
+    
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    rects1 = ax.bar(x - width/2, previous, width, label='Previous (Before)', color='#ef4444')
+    rects2 = ax.bar(x + width/2, current, width, label='Current (After)', color='#10b981')
+    
+    ax.set_ylabel('Health Metrics')
+    ax.set_title('Customer Health Comparison (Before vs After)')
+    ax.set_xticks(x)
+    ax.set_xticklabels(metric_names)
+    ax.legend(loc='upper right')
+    
+    # Label height adjustments on top of bars
+    for rect in rects1:
+        height = rect.get_height()
+        ax.annotate(f'{height}',
+                    xy=(rect.get_x() + rect.get_width() / 2, height),
+                    xytext=(0, 3),  # 3 points vertical offset
+                    textcoords="offset points",
+                    ha='center', va='bottom')
+                    
+    for rect in rects2:
+        height = rect.get_height()
+        ax.annotate(f'{height}',
+                    xy=(rect.get_x() + rect.get_width() / 2, height),
+                    xytext=(0, 3),  # 3 points vertical offset
+                    textcoords="offset points",
+                    ha='center', va='bottom')
+                    
+    fig.tight_layout()
+    
+    output = BytesIO()
+    plt.savefig(output, format='png')
+    plt.close(fig)
+    output.seek(0)
+    
+    return Response(output.read(), mimetype='image/png')
 
 # ==========================================
 # ADMIN DASHBOARD ROUTES
