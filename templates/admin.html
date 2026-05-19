@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | COVID AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #070a13;
+            --bg-card: rgba(13, 17, 30, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --accent: #10b981;
+            --accent-glow: rgba(16, 185, 129, 0.3);
+            
+            --risk-high: #ef4444;
+            --risk-high-glow: rgba(239, 68, 68, 0.2);
+            --risk-medium: #f59e0b;
+            --risk-medium-glow: rgba(245, 158, 11, 0.2);
+            --risk-low: #10b981;
+            --risk-low-glow: rgba(16, 185, 129, 0.2);
+
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Blobs */
+        .blob {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--accent-glow) 0%, rgba(16, 185, 129, 0) 70%);
+            filter: blur(80px);
+            z-index: 1;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .blob-1 { top: -200px; right: -100px; }
+        .blob-2 { bottom: -200px; left: -100px; }
+
+        /* Dashboard Wrapper */
+        .dashboard-container {
+            position: relative;
+            z-index: 10;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 20px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+
+        .brand i {
+            font-size: 28px;
+            color: var(--accent);
+            text-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .brand h1 {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #0b0f19;
+            border: none;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .stat-icon.total {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .stat-icon.high-risk {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .stat-icon.age {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .stat-icon.ratio {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .stat-info h3 {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .stat-info p {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Analytics Section */
+        .analytics-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 992px) {
+            .analytics-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+        }
+
+        .chart-card h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-container {
+            height: 280px;
+            position: relative;
+        }
+
+        /* Controls Section */
+        .controls-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            margin-bottom: 30px;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr repeat(3, 1fr);
+            gap: 15px;
+            align-items: end;
+        }
+
+        @media (max-width: 1200px) {
+            .filters-grid {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .form-control option {
+            background-color: #070a13;
+            color: var(--text-main);
+        }
+
+        select.form-control {
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 36px;
+        }
+
+        /* Table Card Styles */
+        .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-header h2 {
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            padding: 16px;
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 14px;
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Badges styling */
+        .risk-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        .risk-badge.high {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--risk-high);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            box-shadow: 0 0 10px var(--risk-high-glow);
+        }
+
+        .risk-badge.medium {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--risk-medium);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            box-shadow: 0 0 10px var(--risk-medium-glow);
+        }
+
+        .risk-badge.low {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--risk-low);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            box-shadow: 0 0 10px var(--risk-low-glow);
+        }
+
+        /* Symptom Badge */
+        .symptom-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .symptom-badge.yes {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.15);
+        }
+
+        .symptom-badge.no {
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Empty State */
+        .empty-state {
+            padding: 60px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Action buttons in table */
+        .btn-action-delete {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            background: rgba(239, 68, 68, 0.08);
+            color: #ef4444;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-action-delete:hover {
+            background: #ef4444;
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        /* Pagination style */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            border-top: 1px solid var(--glass-border);
+            padding-top: 20px;
+        }
+
+        .pagination-info {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header>
+            <a href="/" class="brand">
+                <i class="fa-solid fa-virus-covid"></i>
+                <h1>COVID AI <span style="font-weight: 300; font-size: 20px; color: var(--text-muted);">Admin Suite</span></h1>
+            </a>
+            <div class="header-actions">
+                <a href="/admin/export/pdf" class="btn btn-secondary" title="Export as PDF document"><i class="fa-solid fa-file-pdf"></i> PDF Export</a>
+                <a href="/admin/export/docx" class="btn btn-secondary" title="Export as Word document"><i class="fa-solid fa-file-word"></i> Word Export</a>
+                <a href="/admin/logout" class="btn btn-danger"><i class="fa-solid fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </header>
+
+        <!-- Stats Counter Section -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon total"><i class="fa-solid fa-database"></i></div>
+                <div class="stat-info">
+                    <h3 id="stat-total-records">-</h3>
+                    <p>Total Records</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon high-risk"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="stat-info">
+                    <h3 id="stat-high-risk">-</h3>
+                    <p>High Risk Cases</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon age"><i class="fa-solid fa-id-card"></i></div>
+                <div class="stat-info">
+                    <h3 id="stat-avg-age">-</h3>
+                    <p>Average Age</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon ratio"><i class="fa-solid fa-venus-mars"></i></div>
+                <div class="stat-info">
+                    <h3 id="stat-gender-ratio">-</h3>
+                    <p>M / F Ratio</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Visualizations -->
+        <section class="analytics-section">
+            <div class="chart-card">
+                <h2><i class="fa-solid fa-chart-pie" style="color: var(--accent);"></i> Risk Level Distribution</h2>
+                <div class="chart-container">
+                    <canvas id="riskDistributionChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h2><i class="fa-solid fa-chart-bar" style="color: var(--accent);"></i> Symptoms Analysis</h2>
+                <div class="chart-container">
+                    <canvas id="symptomsAnalysisChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Search & Filter Area -->
+        <section class="controls-card">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="search-input">Search Patient</label>
+                    <input type="text" id="search-input" class="form-control" placeholder="Search by name...">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-risk">Risk Level</label>
+                    <select id="filter-risk" class="form-control">
+                        <option value="ALL">All Risk Levels</option>
+                        <option value="HIGH RISK">High Risk</option>
+                        <option value="MEDIUM RISK">Medium Risk</option>
+                        <option value="LOW RISK">Low Risk</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-gender">Gender</label>
+                    <select id="filter-gender" class="form-control">
+                        <option value="ALL">All Genders</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-fever">Fever</label>
+                    <select id="filter-fever" class="form-control">
+                        <option value="ALL">All</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-cough">Cough</label>
+                    <select id="filter-cough" class="form-control">
+                        <option value="ALL">All</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-breathing">Difficulty Breathing</label>
+                    <select id="filter-breathing" class="form-control">
+                        <option value="ALL">All</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Records Table -->
+        <section class="table-card">
+            <div class="table-header">
+                <h2>Clinical Records Database</h2>
+                <button onclick="fetchData()" class="btn btn-secondary" style="padding: 8px 14px;"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="records-table">
+                    <thead>
+                        <tr>
+                            <th>Date / Time</th>
+                            <th>Patient Name</th>
+                            <th>Age</th>
+                            <th>Gender</th>
+                            <th style="text-align: center;">Fever</th>
+                            <th style="text-align: center;">Cough</th>
+                            <th style="text-align: center;">Fatigue</th>
+                            <th style="text-align: center;">Chest Pain</th>
+                            <th style="text-align: center;">Breathing</th>
+                            <th style="text-align: center;">Diabetes</th>
+                            <th>Risk Level</th>
+                            <th>Confidence</th>
+                            <th style="text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Content loaded dynamically -->
+                        <tr>
+                            <td colspan="13" class="empty-state">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                <p>Loading clinical database...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination controls -->
+            <div class="pagination-container">
+                <div class="pagination-info" id="pagination-info">Showing 0 to 0 of 0 entries</div>
+                <div class="pagination-buttons">
+                    <button class="btn btn-secondary" id="btn-prev" onclick="prevPage()"><i class="fa-solid fa-angle-left"></i> Previous</button>
+                    <button class="btn btn-secondary" id="btn-next" onclick="nextPage()">Next <i class="fa-solid fa-angle-right"></i></button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Scripting -->
+    <script>
+        let allRecords = [];
+        let filteredRecords = [];
+        let currentPage = 1;
+        const recordsPerPage = 10;
+
+        // Chart References
+        let riskChart = null;
+        let symptomsChart = null;
+
+        // Fetch predictions from API
+        async function fetchData() {
+            try {
+                const response = await fetch('/admin/api/predictions');
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/admin/login';
+                        return;
+                    }
+                    throw new Error("Failed to fetch records");
+                }
+                const data = await response.json();
+                allRecords = data.records || [];
+                applyFilters();
+            } catch (err) {
+                console.error("Error loading administration data:", err);
+                document.getElementById('table-body').innerHTML = `
+                    <tr>
+                        <td colspan="13" class="empty-state" style="color: #ef4444;">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <p>Error loading clinical records. Please refresh or try again.</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Apply filters in client side for extreme responsiveness
+        function applyFilters() {
+            const searchVal = document.getElementById('search-input').value.toLowerCase().trim();
+            const riskVal = document.getElementById('filter-risk').value;
+            const genderVal = document.getElementById('filter-gender').value;
+            const feverVal = document.getElementById('filter-fever').value;
+            const coughVal = document.getElementById('filter-cough').value;
+            const breathingVal = document.getElementById('filter-breathing').value;
+
+            filteredRecords = allRecords.filter(item => {
+                const matchName = item.name.toLowerCase().includes(searchVal);
+                const matchRisk = riskVal === 'ALL' || item.risk_level === riskVal;
+                const matchGender = genderVal === 'ALL' || item.gender === genderVal;
+                const matchFever = feverVal === 'ALL' || item.fever === feverVal;
+                const matchCough = coughVal === 'ALL' || item.cough === coughVal;
+                const matchBreathing = breathingVal === 'ALL' || item.breathing_difficulty === breathingVal;
+
+                return matchName && matchRisk && matchGender && matchFever && matchCough && matchBreathing;
+            });
+
+            currentPage = 1;
+            updateStats(filteredRecords);
+            renderTable();
+            updateCharts(filteredRecords);
+        }
+
+        // Update Stat cards based on subset of records
+        function updateStats(records) {
+            const total = records.length;
+            document.getElementById('stat-total-records').innerText = total;
+
+            const highRisk = records.filter(r => r.risk_level === 'HIGH RISK').length;
+            document.getElementById('stat-high-risk').innerText = highRisk;
+
+            const avgAge = total > 0 ? (records.reduce((sum, r) => sum + r.age, 0) / total).toFixed(1) : 0;
+            document.getElementById('stat-avg-age').innerText = avgAge + " Yrs";
+
+            const males = records.filter(r => r.gender === 'Male').length;
+            const females = records.filter(r => r.gender === 'Female').length;
+            document.getElementById('stat-gender-ratio').innerText = total > 0 ? `${males}:${females}` : "0:0";
+        }
+
+        // Render table with pagination
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            const total = filteredRecords.length;
+
+            if (total === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="13" class="empty-state">
+                            <i class="fa-solid fa-folder-open"></i>
+                            <p>No matching clinical records found.</p>
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('pagination-info').innerText = "Showing 0 to 0 of 0 entries";
+                document.getElementById('btn-prev').disabled = true;
+                document.getElementById('btn-next').disabled = true;
+                return;
+            }
+
+            const totalPages = Math.ceil(total / recordsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIdx = (currentPage - 1) * recordsPerPage;
+            const endIdx = Math.min(startIdx + recordsPerPage, total);
+            const paginatedItems = filteredRecords.slice(startIdx, endIdx);
+
+            tbody.innerHTML = paginatedItems.map(item => {
+                // Determine risk badge class
+                let riskClass = 'low';
+                if (item.risk_level === 'HIGH RISK') riskClass = 'high';
+                else if (item.risk_level === 'MEDIUM RISK') riskClass = 'medium';
+
+                // Helper to format dates nicely
+                const formattedDate = new Date(item.created_at).toLocaleString();
+
+                return `
+                    <tr>
+                        <td style="font-weight: 500; font-size: 13px; color: var(--text-muted);">${formattedDate}</td>
+                        <td style="font-weight: 700; color: #fff;">${escapeHtml(item.name)}</td>
+                        <td style="font-weight: 600;">${item.age}</td>
+                        <td style="font-weight: 500; color: var(--text-muted);">${item.gender}</td>
+                        <td style="text-align: center;">${getSymptomSpan(item.fever)}</td>
+                        <td style="text-align: center;">${getSymptomSpan(item.cough)}</td>
+                        <td style="text-align: center;">${getSymptomSpan(item.fatigue)}</td>
+                        <td style="text-align: center;">${getSymptomSpan(item.chest_pain)}</td>
+                        <td style="text-align: center;">${getSymptomSpan(item.breathing_difficulty)}</td>
+                        <td style="text-align: center;">${getSymptomSpan(item.diabetes)}</td>
+                        <td><span class="risk-badge ${riskClass}">${item.risk_level}</span></td>
+                        <td style="font-weight: 800; color: var(--accent);">${item.confidence}</td>
+                        <td style="text-align: center;">
+                            <button onclick="deleteRecord(${item.id})" class="btn-action-delete" title="Delete Record">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('pagination-info').innerText = `Showing ${startIdx + 1} to ${endIdx} of ${total} entries`;
+            document.getElementById('btn-prev').disabled = currentPage === 1;
+            document.getElementById('btn-next').disabled = currentPage === totalPages;
+        }
+
+        // Helpers
+        function getSymptomSpan(val) {
+            if (val === 'Yes') return `<span class="symptom-badge yes"><i class="fa-solid fa-check"></i></span>`;
+            return `<span class="symptom-badge no"><i class="fa-solid fa-minus"></i></span>`;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // Delete record via AJAX
+        async function deleteRecord(id) {
+            if (!confirm("Are you sure you want to permanently delete this clinical entry? This action cannot be undone.")) return;
+
+            try {
+                const response = await fetch(`/admin/api/predictions/${id}/delete`, {
+                    method: 'POST'
+                });
+                if (!response.ok) {
+                    throw new Error("Deletion failed");
+                }
+                const result = await response.json();
+                if (result.success) {
+                    allRecords = allRecords.filter(r => r.id !== id);
+                    applyFilters();
+                } else {
+                    alert("Failed to delete record: " + (result.message || "Unknown error"));
+                }
+            } catch (err) {
+                console.error("Error deleting record:", err);
+                alert("An error occurred while deleting the clinical entry. Please try again.");
+            }
+        }
+
+        // Pagination functions
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable();
+            }
+        }
+
+        // Update Analytics Charts
+        function updateCharts(records) {
+            // 1. Risk Level count
+            const highCount = records.filter(r => r.risk_level === 'HIGH RISK').length;
+            const medCount = records.filter(r => r.risk_level === 'MEDIUM RISK').length;
+            const lowCount = records.filter(r => r.risk_level === 'LOW RISK').length;
+
+            // Update or Init Risk Pie Chart
+            const riskCtx = document.getElementById('riskDistributionChart').getContext('2d');
+            if (riskChart) {
+                riskChart.data.datasets[0].data = [lowCount, medCount, highCount];
+                riskChart.update();
+            } else {
+                riskChart = new Chart(riskCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Low Risk', 'Medium Risk', 'High Risk'],
+                        datasets: [{
+                            data: [lowCount, medCount, highCount],
+                            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                            borderWidth: 2,
+                            borderColor: '#0b0f19'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: { color: '#94a3b8', font: { family: 'Outfit', size: 12 } }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Symptom presence rates
+            const total = records.length;
+            const symptomsList = ['fever', 'cough', 'fatigue', 'chest_pain', 'breathing_difficulty', 'diabetes'];
+            const symptomLabels = ['Fever', 'Cough', 'Fatigue', 'Chest Pain', 'Breathing Diff.', 'Diabetes'];
+            
+            const symptomCounts = symptomsList.map(sym => {
+                return records.filter(r => r[sym] === 'Yes').length;
+            });
+
+            // Update or Init Symptoms Bar Chart
+            const symCtx = document.getElementById('symptomsAnalysisChart').getContext('2d');
+            if (symptomsChart) {
+                symptomsChart.data.datasets[0].data = symptomCounts;
+                symptomsChart.update();
+            } else {
+                symptomsChart = new Chart(symCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: symptomLabels,
+                        datasets: [{
+                            label: 'Cases with Symptom',
+                            data: symptomCounts,
+                            backgroundColor: 'rgba(16, 185, 129, 0.4)',
+                            borderColor: '#10b981',
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: { color: '#94a3b8', font: { family: 'Outfit' }, stepSize: 1 }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#94a3b8', font: { family: 'Outfit' } }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Add filter change event listeners
+        document.getElementById('search-input').addEventListener('input', applyFilters);
+        document.getElementById('filter-risk').addEventListener('change', applyFilters);
+        document.getElementById('filter-gender').addEventListener('change', applyFilters);
+        document.getElementById('filter-fever').addEventListener('change', applyFilters);
+        document.getElementById('filter-cough').addEventListener('change', applyFilters);
+        document.getElementById('filter-breathing').addEventListener('change', applyFilters);
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchData();
+        });
+    </script>
+</body>
+</html>

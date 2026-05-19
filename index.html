@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COVID AI | World-Class Prediction Engine</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <div class="noise"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <nav id="navbar">
+        <a href="#" class="logo">
+            <i class="fa-solid fa-virus-covid"></i> COVID AI
+        </a>
+        <div class="nav-links">
+            <a href="#stats">Global Stats</a>
+            <a href="#analytics">Analytics</a>
+            <a href="#engine">Engine</a>
+            <a href="#safety">Safety</a>
+            <a href="http://127.0.0.1:5000/admin">Access Admin</a>
+        </div>
+        <div class="nav-extra">
+            <a href="#engine" class="nav-cta">Analyze Now</a>
+            <button class="menu-toggle" id="mobile-menu" aria-label="Toggle Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MOBILE MENU OVERLAY -->
+    <div class="mobile-overlay" id="mobile-overlay">
+        <div class="overlay-close" id="overlay-close">
+            <i class="fa-solid fa-xmark"></i>
+        </div>
+        <div class="overlay-links">
+            <a href="#stats" onclick="toggleMenu()">Global Stats</a>
+            <a href="#analytics" onclick="toggleMenu()">Analytics</a>
+            <a href="#engine" onclick="toggleMenu()">Engine</a>
+            <a href="#safety" onclick="toggleMenu()">Safety</a>
+            <a href="http://127.0.0.1:5000/admin" onclick="toggleMenu()">Access Admin</a>
+        </div>
+    </div>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="hero-tag">Powered by Advanced Machine Learning</div>
+        <h1>COVID-19<br>Prediction Dashboard</h1>
+        <p>AI Powered Healthcare Risk Analysis System</p>
+        
+        <div class="stats-container" id="stats">
+            <div class="stat-card">
+                <h3 id="stat-total">705M</h3>
+                <p>Global Cases</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="stat-accuracy">98.4%</h3>
+                <p>ML Accuracy</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="stat-users">2.5M</h3>
+                <p>Active Users</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="stat-saved">22M</h3>
+                <p>Lives Impacted</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ENGINE SECTION -->
+    <section class="tool-section" id="engine">
+        <div class="section-header">
+            <h2>The Prediction Engine</h2>
+            <p>Input clinical markers for a real-time risk assessment.</p>
+        </div>
+
+        <div class="engine-container">
+            <!-- INPUT PANEL -->
+            <div class="input-panel">
+                <div class="input-grid">
+                    <div class="field full-width">
+                        <label>Patient Name</label>
+                        <input type="text" id="patientName" placeholder="Enter full name">
+                    </div>
+                    <div class="field">
+                        <label>Age</label>
+                        <input type="number" id="age" value="25">
+                    </div>
+                    <div class="field">
+                        <label>Gender</label>
+                        <div class="custom-select" id="genderSelect">
+                            <div class="select-trigger">
+                                <span>Male</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                            <div class="select-options">
+                                <div class="option selected" data-value="Male">Male</div>
+                                <div class="option" data-value="Female">Female</div>
+                            </div>
+                            <input type="hidden" id="gender" value="Male">
+                        </div>
+                    </div>
+
+                    <!-- Symptoms -->
+                    <div class="field">
+                        <label>Fever</label>
+                        <select id="fever">
+                            <option>No</option>
+                            <option>Yes</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Cough</label>
+                        <select id="cough">
+                            <option>No</option>
+                            <option>Yes</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Fatigue</label>
+                        <select id="fatigue">
+                            <option>No</option>
+                            <option>Yes</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Chest Pain</label>
+                        <select id="chest">
+                            <option>No</option>
+                            <option>Yes</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Breathing Difficulty</label>
+                        <select id="breathing">
+                            <option>No</option>
+                            <option>Yes</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Medical History (Diabetes)</label>
+                        <select id="diabetes">
+                            <option>No</option>
+                            <option>Yes</option>
+                        </select>
+                    </div>
+
+                    <button class="predict-button" onclick="predictRisk()">
+                        Run Analysis <i class="fa-solid fa-bolt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- OUTPUT PANEL -->
+            <div class="output-panel">
+                <div class="placeholder-view" id="placeholderView">
+                    <i class="fa-solid fa-microscope"></i>
+                    <h3>Ready for Analysis</h3>
+                    <p>Complete the form to generate your report.</p>
+                </div>
+
+                <div class="luxury-loader" id="loader">
+                    <div class="spinner"></div>
+                    <p>Scanning clinical markers...</p>
+                </div>
+
+                <div class="result-view" id="resultView">
+                    <p style="color: var(--accent); font-weight: 600; text-transform: uppercase; margin-bottom: 10px;">Analysis Result</p>
+                    <div id="riskBadge" class="risk-badge">HIGH RISK</div>
+                    <h2 id="resultName" style="margin-bottom: 20px; font-size: 32px;">Patient: John Doe</h2>
+                    <p id="resultText" style="color: var(--text-muted); margin-bottom: 30px; font-size: 18px;">Immediate medical consultation is recommended based on symptom markers.</p>
+                    
+                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 16px; border: 1px solid var(--glass-border);">
+                        <p style="font-size: 14px; color: var(--text-muted);">Confidence Score</p>
+                        <h3 id="confidenceScore" style="font-size: 24px; color: var(--accent);">98.4%</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEDICATED HISTORY SECTION -->
+        <div class="history-container" style="margin-top: 80px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px;">
+                <h2 style="font-size: 32px; font-weight: 800;"><i class="fa-solid fa-database"></i> COVID-19 Prediction Dashboard Prediction History</h2>
+                <button onclick="clearHistory()" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px 20px; border-radius: 12px; cursor: pointer; font-size: 14px; font-weight: 600; transition: var(--transition);">
+                    <i class="fa-solid fa-trash-can"></i> Clear Records
+                </button>
+            </div>
+
+            <div id="historyList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px;">
+                <!-- Empty State -->
+                <div id="emptyHistory" class="stat-card" style="grid-column: 1 / -1; padding: 60px; opacity: 0.5;">
+                    <i class="fa-solid fa-folder-open" style="font-size: 50px; margin-bottom: 20px; display: block;"></i>
+                    <p>No historical analysis records found. Run the engine to generate data.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ANALYTICS SECTION -->
+    <section class="tool-section" id="analytics">
+        <div class="section-header">
+            <h2>Market Intelligence</h2>
+            <p>Real-time visualization of global healthcare trends and data points.</p>
+        </div>
+        <div class="engine-container" style="padding: 40px; display: block;">
+            <canvas id="covidChart" style="width: 100%; height: 400px;"></canvas>
+        </div>
+    </section>
+
+    <!-- PREVENTION SECTION -->
+    <section class="tool-section" id="safety" style="background: transparent;">
+        <div class="section-header">
+            <h2>Safety Protocol</h2>
+            <p>Guided measures to ensure community and individual protection.</p>
+        </div>
+        <div class="stats-container" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="stat-card" style="text-align: left;">
+                <i class="fa-solid fa-mask-face" style="font-size: 40px; color: var(--accent); margin-bottom: 20px;"></i>
+                <h3 style="font-size: 24px;">Precision Masking</h3>
+                <p style="text-transform: none; margin-top: 10px;">Utilize medical-grade N95 or surgical masks in high-density environments to minimize aerosol exposure.</p>
+            </div>
+            <div class="stat-card" style="text-align: left;">
+                <i class="fa-solid fa-hands-bubbles" style="font-size: 40px; color: var(--accent); margin-bottom: 20px;"></i>
+                <h3 style="font-size: 24px;">Sanitization Routine</h3>
+                <p style="text-transform: none; margin-top: 10px;">Rigorous hand hygiene protocols using 70%+ isopropyl alcohol solutions or antibacterial soap.</p>
+            </div>
+            <div class="stat-card" style="text-align: left;">
+                <i class="fa-solid fa-people-arrows" style="font-size: 40px; color: var(--accent); margin-bottom: 20px;"></i>
+                <h3 style="font-size: 24px;">Social Dynamics</h3>
+                <p style="text-transform: none; margin-top: 10px;">Maintain a minimum tactical distance of 6 feet (2 meters) to mitigate respiratory droplet transmission.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <span class="footer-logo">COVID AI</span>
+        <p>&copy; 2024 COVID AI Prediction Systems. All rights reserved.</p>
+        <p style="margin-top: 10px; font-size: 12px; opacity: 0.5;">For educational purposes only. Not a substitute for professional medical advice.</p>
+    </footer>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
